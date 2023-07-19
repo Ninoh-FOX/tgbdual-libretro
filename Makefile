@@ -92,6 +92,36 @@ else ifeq ($(platform),$(filter $(platform),classic_armv7_a7 unix-armv7-hardfloa
 	    LDFLAGS += -static-libgcc -static-libstdc++
 	  endif
 	endif
+	
+else ifeq ($(platform), miyoomini)
+	TARGET := $(TARGET_NAME)_libretro.so
+	fpic := -fPIC
+	SHARED := -shared -Wl,--version-script=libretro/link.T
+	CC = /opt/miyoomini-toolchain/usr/bin/arm-linux-gcc
+    CXX = /opt/miyoomini-toolchain/usr/bin/arm-linux-g++
+    AR = /opt/miyoomini-toolchain/usr/bin/arm-linux-ar
+	CFLAGS += -Ofast \
+		-flto=4 -fwhole-program -fuse-linker-plugin \
+		-fdata-sections -ffunction-sections -Wl,--gc-sections \
+		-fno-stack-protector -fno-ident -fomit-frame-pointer \
+		-falign-functions=1 -falign-jumps=1 -falign-loops=1 \
+		-fno-unwind-tables -fno-asynchronous-unwind-tables -fno-unroll-loops \
+		-fmerge-all-constants -fno-math-errno \
+		-marm -mtune=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
+	CXXFLAGS += $(CFLAGS)
+	CPPFLAGS += $(CFLAGS)
+	ASFLAGS += $(CFLAGS)
+	HAVE_NEON = 1
+	ARCH = arm
+	ifeq ($(shell echo `$(CC) -dumpversion` "< 4.9" | bc -l), 1)
+	  CFLAGS += -march=armv7-a
+	else
+	  CFLAGS += -march=armv7ve
+	  # If gcc is 5.0 or later
+	  ifeq ($(shell echo `$(CC) -dumpversion` ">= 5" | bc -l), 1)
+	    LDFLAGS += -static-libgcc -static-libstdc++
+	  endif
+	endif
 #######################################
    
 # OS X
