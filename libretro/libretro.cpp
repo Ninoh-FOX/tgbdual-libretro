@@ -4,7 +4,7 @@
 
 #include <stdlib.h>
 
-#include "libretro.h"
+#include <libretro.h>
 #include "../gb_core/gb.h"
 #include "dmy_renderer.h"
 
@@ -44,7 +44,7 @@ static const struct retro_subsystem_rom_info gb_roms[] = {
     { "GameBoy #2", "gb|gbc", false, false, false, gb2_memory, 1 },
 };
 
-   static const struct retro_subsystem_info subsystems[] = {
+static const struct retro_subsystem_info subsystems[] = {
       { "2 Player Game Boy Link", "gb_link_2p", gb_roms, 2, RETRO_GAME_TYPE_GAMEBOY_LINK_2P },
       { NULL },
 };
@@ -226,8 +226,7 @@ static void check_variables(void)
       _screen_switched = false;
 }
 
-
-bool retro_load_game(const struct retro_game_info *info)
+bool retro_load_game(const struct retro_game_info *info, const char* rom_name)
 {
    size_t rom_size;
    byte *rom_data;
@@ -287,7 +286,7 @@ bool retro_load_game(const struct retro_game_info *info)
    }
 
    if (!g_gb[0]->load_rom(rom_data, rom_size, NULL, 0,
-            libretro_supports_persistent_buffer))
+            libretro_supports_persistent_buffer, rom_name))
       return false;
 
    for (i = 0; i < 2; i++)
@@ -302,7 +301,7 @@ bool retro_load_game(const struct retro_game_info *info)
       g_gb[1]   = new gb(render[1], true, true);
 
       if (!g_gb[1]->load_rom(rom_data, rom_size, NULL, 0,
-               libretro_supports_persistent_buffer))
+               libretro_supports_persistent_buffer, rom_name))
          return false;
 
       // for link cables and IR:
@@ -318,11 +317,14 @@ bool retro_load_game(const struct retro_game_info *info)
 }
 
 
-bool retro_load_game_special(unsigned type, const struct retro_game_info *info, size_t num_info)
+bool retro_load_game_special(unsigned type, const struct retro_game_info *info, size_t num_info, const char* rom_name)
 {
     if (type != RETRO_GAME_TYPE_GAMEBOY_LINK_2P)
         return false; /* all other types are unhandled for now */
-
+	
+    if (!gblink_enable)
+      return false;
+	
    environ_cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void *)vars_dual);
    unsigned i;
 
@@ -367,7 +369,7 @@ bool retro_load_game_special(unsigned type, const struct retro_game_info *info, 
 
    render[0] = new dmy_renderer(0);
    g_gb[0]   = new gb(render[0], true, true);
-   if (!g_gb[0]->load_rom((byte*)info[0].data, info[0].size, NULL, 0, false))
+   if (!g_gb[0]->load_rom((byte*)info[0].data, info[0].size, NULL, 0, false, rom_name))
       return false;
 
    for (i = 0; i < 2; i++)
@@ -379,7 +381,7 @@ bool retro_load_game_special(unsigned type, const struct retro_game_info *info, 
       g_gb[1] = new gb(render[1], true, true);
 
       if (!g_gb[1]->load_rom((byte*)info[1].data, info[1].size, NULL, 0,
-               false))
+               false, rom_name))
          return false;
 
       // for link cables and IR:
@@ -390,7 +392,6 @@ bool retro_load_game_special(unsigned type, const struct retro_game_info *info, 
    mode = MODE_DUAL_GAME;
    return true;
 }
-
 
 void retro_unload_game(void)
 {
@@ -406,6 +407,7 @@ void retro_unload_game(void)
       }
    }
    free(my_av_info);
+   my_av_info = NULL;
    libretro_supports_persistent_buffer = false;
 }
 

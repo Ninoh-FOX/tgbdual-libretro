@@ -93,21 +93,14 @@ else ifeq ($(platform),$(filter $(platform),classic_armv7_a7 unix-armv7-hardfloa
 	  endif
 	endif
 	
-else ifeq ($(platform), miyoomini)
+else ifeq ($(platform),$(filter $(platform),miyoomini))
 	TARGET := $(TARGET_NAME)_libretro.so
+	CC = /opt/miyoomini-toolchain/bin/arm-linux-gnueabihf-gcc
+	CXX = /opt/miyoomini-toolchain/bin/arm-linux-gnueabihf-g++
+	AR = /opt/miyoomini-toolchain/bin/arm-linux-gnueabihf-ar
 	fpic := -fPIC
 	SHARED := -shared -Wl,--version-script=libretro/link.T
-	CC = /opt/miyoomini-toolchain/usr/bin/arm-linux-gcc
-    CXX = /opt/miyoomini-toolchain/usr/bin/arm-linux-g++
-    AR = /opt/miyoomini-toolchain/usr/bin/arm-linux-ar
-	CFLAGS += -Ofast \
-		-flto=4 -fwhole-program -fuse-linker-plugin \
-		-fdata-sections -ffunction-sections -Wl,--gc-sections \
-		-fno-stack-protector -fno-ident -fomit-frame-pointer \
-		-falign-functions=1 -falign-jumps=1 -falign-loops=1 \
-		-fno-unwind-tables -fno-asynchronous-unwind-tables -fno-unroll-loops \
-		-fmerge-all-constants -fno-math-errno \
-		-marm -mtune=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
+	CFLAGS += -marm -mtune=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
 	CXXFLAGS += $(CFLAGS)
 	CPPFLAGS += $(CFLAGS)
 	ASFLAGS += $(CFLAGS)

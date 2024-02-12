@@ -25,7 +25,7 @@
 
 #include "dmy_renderer.h"
 #include "../gb_core/gb.h"
-#include "libretro.h"
+#include <libretro.h>
 
 extern gb *g_gb[2];
 
