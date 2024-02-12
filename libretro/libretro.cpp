@@ -3,6 +3,7 @@
 #endif
 
 #include <stdlib.h>
+#include <cstring>
 
 #include <libretro.h>
 #include "../gb_core/gb.h"
@@ -80,6 +81,17 @@ bool libretro_supports_persistent_buffer = false;
 bool libretro_supports_bitmasks          = false;
 struct retro_system_av_info *my_av_info  = (retro_system_av_info*)malloc(sizeof(*my_av_info));
 
+const char* get_filename_from_path(const char* path) {
+    const char* filename = strrchr(path, '/');
+    if (!filename) {
+        filename = strrchr(path, '\\');
+    }
+    if (!filename) {
+        return path;
+    }
+    return filename + 1;
+}
+
 void retro_get_system_info(struct retro_system_info *info)
 {
    info->library_name     = "TGB Dual";
@@ -87,7 +99,7 @@ void retro_get_system_info(struct retro_system_info *info)
 #define GIT_VERSION ""
 #endif
    info->library_version  = "v0.8.3" GIT_VERSION;
-   info->need_fullpath    = false;
+   info->need_fullpath    = true;
    info->valid_extensions = "gb|dmg|gbc|cgb|sgb";
 }
 
@@ -226,11 +238,12 @@ static void check_variables(void)
       _screen_switched = false;
 }
 
-bool retro_load_game(const struct retro_game_info *info, const char* rom_name)
+bool retro_load_game(const struct retro_game_info *info)
 {
    size_t rom_size;
    byte *rom_data;
    const struct retro_game_info_ext *info_ext = NULL;
+   const char *rom_name = get_filename_from_path(info->path);
    environ_cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void *)vars_single);
    check_variables();
 
@@ -317,13 +330,15 @@ bool retro_load_game(const struct retro_game_info *info, const char* rom_name)
 }
 
 
-bool retro_load_game_special(unsigned type, const struct retro_game_info *info, size_t num_info, const char* rom_name)
+bool retro_load_game_special(unsigned type, const struct retro_game_info *info, size_t num_info)
 {
     if (type != RETRO_GAME_TYPE_GAMEBOY_LINK_2P)
         return false; /* all other types are unhandled for now */
 	
     if (!gblink_enable)
       return false;
+	
+   const char *rom_name = get_filename_from_path(info->path);
 	
    environ_cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void *)vars_dual);
    unsigned i;
