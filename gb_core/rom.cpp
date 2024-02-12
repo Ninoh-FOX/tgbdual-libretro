@@ -56,50 +56,51 @@ int rom::get_sram_size()
 	return 0x2000*tbl_ram[info.ram_size];
 }
 
-bool rom::load_rom(byte *buf, int size, byte *ram, int ram_size, bool persistent, const char* rom_name)
+bool rom::load_rom(byte *buf,int size,byte *ram,int ram_size, bool persistent)
 {
-    byte momocol_title[16] = {0x4D, 0x4F, 0x4D, 0x4F, 0x43, 0x4F, 0x4C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+	byte momocol_title[16]={0x4D,0x4F,0x4D,0x4F,0x43,0x4F,0x4C,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
 
-    if (b_loaded) {
-        if (!persistent)
-            free(dat);
-        free(sram);
-    }
+	if (b_loaded){
+      if (!persistent)
+         free(dat);
+		free(sram);
+	}
 
-    strncpy(info.cart_name, rom_name, 16);
-    info.cart_name[16] = '\0';
+	memcpy(info.cart_name,buf+0x134,16);
+	info.cart_name[16]='\0';
+	info.cart_name[17]='\0';
+	info.cart_type=buf[0x147];
+	info.rom_size=buf[0x148];
+	info.ram_size=buf[0x149];
 
-    info.cart_type = buf[0x147];
-    info.rom_size = buf[0x148];
-    info.ram_size = buf[0x149];
+	if (memcmp(info.cart_name,momocol_title,16)==0){
+		info.cart_type=0x100;//mmm01
+	}
 
-    if (memcmp(info.cart_name, momocol_title, 16) == 0) {
-        info.cart_type = 0x100; // mmm01
-    }
+	byte tmp2=buf[0x143];
 
-    byte tmp2 = buf[0x143];
+	info.gb_type=(tmp2&0x80)?3:1;
 
-    info.gb_type = (tmp2 & 0x80) ? 3 : 1;
+	if (info.rom_size>8)
+		return false;
 
-    if (info.rom_size > 8)
-        return false;
+   if (persistent)
+      dat = (byte*)buf;
+   else
+   {
+      dat=(byte*)malloc(size);
+      memcpy(dat,buf,size);
+   }
+	first_page=dat;
 
-    if (persistent)
-        dat = (byte *)buf;
-    else {
-        dat = (byte *)malloc(size);
-        memcpy(dat, buf, size);
-    }
-    first_page = dat;
+	sram=(byte*)malloc(get_sram_size());
+	if (ram)
+		memcpy(sram,ram,ram_size&0xffffff00);
 
-    sram = (byte *)malloc(get_sram_size());
-    if (ram)
-        memcpy(sram, ram, ram_size & 0xffffff00);
+	b_loaded     = true;
+   b_persistent = persistent;
 
-    b_loaded = true;
-    b_persistent = persistent;
-
-    return true;
+	return true;
 }
 
 void rom::serialize(serializer &s)

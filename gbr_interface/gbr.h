@@ -59,7 +59,7 @@ public:
 
 	void run();
 	void reset();
-	void load_rom(byte *buf, int size, byte *ram, int ram_size, bool persistent, const char* rom_name);
+	void load_rom(byte *buf,int size);
 	void select(int num) { cur_num=num; procs->select(num); }
 	int get_num(void) { return cur_num; }
 	void set_enable(int ch,int enable) { procs->enable(ch,enable); }
