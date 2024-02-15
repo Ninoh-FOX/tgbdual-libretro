@@ -41,7 +41,8 @@ extern bool gblink_enable;
 extern int audio_2p_mode;
 
 #define MSG_FRAMES 60
-#define SAMPLES_PER_FRAME (44100/60)
+// fixed sound time in miyoo mini, set 44100 to 48000.
+#define SAMPLES_PER_FRAME (48000/60)
 
 bool _screen_2p_vertical = false;
 bool _screen_switched = false; // set to draw player 2 on the left/top
